@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><h1><u><i>Drawing Pad</i></u></h1>
+<title> Drawing pad</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        .drawing-container {
+            text-align: center;
+            width: 820px;
+        }
+        canvas {
+            border: 2px solid #000;
+            cursor: crosshair;
+            background-color: #ffffff;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .control-item {
+            margin: 5px;
+        }
+        input[type="range"], input[type="color"] {
+            margin: 5px;
+        }
+        .shape-btn, .tool-btn {
+            margin: 5px;
+        }
+        #saveBtn {
+            margin-top: 10px;
+        }
+        #textInput {
+            margin: 5px;
+        }
+        #emojiSelect {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="drawing-container">
+        <canvas id="drawingCanvas" width="800" height="500"></canvas>
+        <div class="controls">
+            <!-- Drawing Tools -->
+            <button class="tool-btn" id="pencilBtn">Pencil</button>
+            <button class="tool-btn" id="eraserBtn">Eraser</button>
+
+            <!-- Shape Tools -->
+            <button class="shape-btn" id="circleBtn">Circle</button>
+            <button class="shape-btn" id="squareBtn">Square</button>
+            <button class="shape-btn" id="triangleBtn">Triangle</button>
+            <button class="shape-btn" id="starBtn">Star</button>
+
+            <!-- Brush Size -->
+            <label>Brush Size</label>
+            <input type="range" id="brushSize" min="1" max="50" value="5">
+
+            <!-- Brush Color -->
+            <label>Brush Color</label>
+            <input type="color" class="color-picker" id="colorPicker" value="#000000">
+
+            <!-- Background Color -->
+            <label>Canvas Background</label>
+            <input type="color" id="bgColorPicker" value="#ffffff">
+
+            <!-- Text -->
+            <label>Text</label>
+            <input type="text" id="textInput" placeholder="Type text here">
+
+            <!-- Emoji -->
+            <label>Emoji</label>
+            <select id="emojiSelect">
+                <option value="😊">😊</option>
+                <option value="🎨">🎨</option>
+                <option value="🌟">🌟</option>
+            </select>
+
+            <!-- Clear & Save -->
+            <button id="clearBtn">Clear</button>
+            <button id="saveBtn">Save & Download</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const brushSize = document.getElementById('brushSize');
+        const clearBtn = document.getElementById('clearBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const pencilBtn = document.getElementById('pencilBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+        const circleBtn = document.getElementById('circleBtn');
+        const squareBtn = document.getElementById('squareBtn');
+        const triangleBtn = document.getElementById('triangleBtn');
+        const starBtn = document.getElementById('starBtn');
+        const textInput = document.getElementById('textInput');
+        const emojiSelect = document.getElementById('emojiSelect');
+        const bgColorPicker = document.getElementById('bgColorPicker');
+
+        let isDrawing = false;
+        let currentX = 0;
+        let currentY = 0;
+        let drawingTool = 'pencil';  // Default tool is pencil
+        let startX, startY;
+        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);  // To store canvas state
+
+        // Set initial drawing properties
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.lineWidth = brushSize.value;
+        ctx.fillStyle = colorPicker.value;
+
+        // Set background color of canvas
+        bgColorPicker.addEventListener('input', () => {
+            canvas.style.backgroundColor = bgColorPicker.value;
+        });
+
+        // Start drawing
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [currentX, currentY] = [e.offsetX, e.offsetY];
+            if (drawingTool === 'pencil' || drawingTool === 'eraser') {
+                ctx.beginPath();
+                ctx.moveTo(currentX, currentY);
+            } else if (['circle', 'square', 'triangle', 'star'].includes(drawingTool)) {
+                [startX, startY] = [currentX, currentY];
+            }
+        });
+
+        // Draw on canvas
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                const newX = e.offsetX;
+                const newY = e.offsetY;
+                ctx.strokeStyle = drawingTool === 'pencil' ? colorPicker.value : '#ffffff';
+                ctx.lineWidth = brushSize.value;
+                if (drawingTool === 'pencil' || drawingTool === 'eraser') {
+                    ctx.lineTo(newX, newY);
+                    ctx.stroke();
+                } else if (drawingTool === 'circle') {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.putImageData(imgData, 0, 0);
+                    ctx.beginPath();
+                    const radius = Math.sqrt(Math.pow(newX - startX, 2) + Math.pow(newY - startY, 2));
+                    ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else if (drawingTool === 'square') {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.putImageData(imgData, 0, 0);
+                    ctx.beginPath();
+                    const side = Math.max(Math.abs(newX - startX), Math.abs(newY - startY));
+                    ctx.rect(startX, startY, side, side);
+                    ctx.stroke();
+                } else if (drawingTool === 'triangle') {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.putImageData(imgData, 0, 0);
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(newX, newY);
+                    ctx.lineTo(startX + (newX - startX), newY);
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (drawingTool === 'star') {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.putImageData(imgData, 0, 0);
+                    ctx.beginPath();
+                    let points = 5;
+                    let outerRadius = Math.sqrt(Math.pow(newX - startX, 2) + Math.pow(newY - startY, 2));
+                    let angle = Math.PI / points;
+                    for (let i = 0; i < 2 * points; i++) {
+                        let radius = i % 2 === 0 ? outerRadius : outerRadius / 2;
+                        let x = startX + radius * Math.cos(i * angle);
+                        let y = startY + radius * Math.sin(i * angle);
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+            }
+        });
+
+        // Stop drawing
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            imgData = ctx.getImageData(0, 0, canvas.width, canvas.height); // Store current canvas state
+        });
+        canvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+        });
+
+        // Switch tools
+        pencilBtn.addEventListener('click', () => drawingTool = 'pencil');
+        eraserBtn.addEventListener('click', () => drawingTool = 'eraser');
+        circleBtn.addEventListener('click', () => drawingTool = 'circle');
+        squareBtn.addEventListener('click', () => drawingTool = 'square');
+        triangleBtn.addEventListener('click', () => drawingTool = 'triangle');
+        starBtn.addEventListener('click', () => drawingTool = 'star');
+
+        // Add text to canvas
+        textInput.addEventListener('input', () => {
+            const text = textInput.value;
+            ctx.font = "30px Arial";
+            ctx.fillText(text, 100, 100);
+        });
+
+        // Add emoji to canvas
+        emojiSelect.addEventListener('change', () => {
+            const emoji = emojiSelect.value;
+            ctx.font = "40px Arial";
+            ctx.fillText(emoji, 200, 200);
+        });
+
+        // Clear the canvas
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        });
+
+        // Save & Download the artwork
+        saveBtn.addEventListener('click', () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'digital_artwork.png';
+            link.click();
+        });
+
+    </script>
+</body>
+</html>
