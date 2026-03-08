@@ -9,7 +9,7 @@ An interactive web-based drawing application that allows users to create digital
 - **Responsive UI:** Optimized for various screen sizes and browsers.
 
 # Technologies Used
-- **Frontend:** HTML5, CSS3, Vanilla JavaScript (Canvas API)
+- **Frontend:** HTML5, CSS3, JavaScript
 - **Development Tool:** Visual Studio Code
 - **Version Control:** Git & GitHub
 
